@@ -42,10 +42,12 @@
   button:hover {
     background: #45a049;
   }
-  #progress {
+  #progressBox {
     margin-top: 15px;
-    font-weight: bold;
-    text-align: center;
+    padding: 10px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    font-size: 14px;
   }
 </style>
 </head>
@@ -55,17 +57,26 @@
   <input type="text" id="url" placeholder="Enter URL">
   <input type="number" id="views" placeholder="Number of Views">
   <button id="startBtn">Start</button>
-  <div id="progress"></div>
+  <div id="progressBox" style="display:none;">
+    <div><b>Task:</b> <span id="taskUrl"></span></div>
+    <div><b>Progress:</b> <span id="progressCount"></span></div>
+  </div>
 </div>
 
 <script>
 document.getElementById("startBtn").onclick = async () => {
-  const url = document.getElementById("url").value;
+  const url = document.getElementById("url").value.trim();
   const totalViews = parseInt(document.getElementById("views").value);
-  const progress = document.getElementById("progress");
+  if (!url || !totalViews) {
+    alert("Please enter a valid URL and number of views");
+    return;
+  }
+
+  document.getElementById("taskUrl").innerText = url;
+  document.getElementById("progressBox").style.display = "block";
 
   let completed = 0;
-  const batchSize = 5; // number of views per request
+  const batchSize = 5;
 
   while (completed < totalViews) {
     const remaining = totalViews - completed;
@@ -79,9 +90,10 @@ document.getElementById("startBtn").onclick = async () => {
 
     let data = await res.json();
     completed += data.completed;
-    progress.innerText = `${completed} / ${totalViews} complete`;
+    document.getElementById("progressCount").innerText =
+      `${completed} / ${totalViews} complete`;
 
-    await new Promise(r => setTimeout(r, 1000)); // 1s delay between batches
+    await new Promise(r => setTimeout(r, 1000)); // 1s delay
   }
 };
 </script>
