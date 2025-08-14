@@ -57,6 +57,95 @@
   <input type="text" id="url" placeholder="Enter URL">
   <input type="number" id="views" placeholder="Number of Views">
   <button id="startBtn">Start</button>
+  
+  <div id="progressBox" style="display:none;">
+    <div><b>Task:</b> <span id="taskUrl"></span></div>
+    <div><b>Progress:</b> <span id="progressCount"></span></div>
+  </div>
+</div>
+
+<script>
+function updateProgressDisplay(url, completed, total) {
+  document.getElementById("taskUrl").innerText = url;
+  document.getElementById("progressBox").style.display = "block";
+  document.getElementById("progressCount").innerText =
+    `${completed} / ${total} complete`;
+}
+
+document.getElementById("startBtn").onclick = async () => {
+  const url = document.getElementById("url").value.trim();
+  const totalViews = parseInt(document.getElementById("views").value);
+  if (!url || !totalViews) {
+    alert("Please enter a valid URL and number of views");
+    return;
+  }
+
+  // Save task info to localStorage
+  localStorage.setItem("taskUrl", url);
+  localStorage.setItem("totalViews", totalViews);
+  localStorage.setItem("completedViews", 0);
+
+  let completed = 0;
+  const batchSize = 5;
+
+  updateProgressDisplay(url, completed, totalViews);
+
+  while (completed < totalViews) {
+    const remaining = totalViews - completed;
+    const count = remaining < batchSize ? remaining : batchSize;
+
+    let res = await fetch("/api/viewer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, count })
+    });
+
+    let data = await res.json();
+    completed += data.completed;
+
+    // Save updated progress
+    localStorage.setItem("completedViews", completed);
+
+    updateProgressDisplay(url, completed, totalViews);
+    await new Promise(r => setTimeout(r, 1000)); // delay between batches
+  }
+};
+
+// Restore progress if available
+window.onload = () => {
+  const savedUrl = localStorage.getItem("taskUrl");
+  const savedTotal = parseInt(localStorage.getItem("totalViews"));
+  const savedCompleted = parseInt(localStorage.getItem("completedViews"));
+
+  if (savedUrl && savedTotal) {
+    updateProgressDisplay(savedUrl, savedCompleted || 0, savedTotal);
+  }
+};
+</script>
+</body>
+</html>    background: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #45a049;
+  }
+  #progressBox {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Auto View Generator</h1>
+  <input type="text" id="url" placeholder="Enter URL">
+  <input type="number" id="views" placeholder="Number of Views">
+  <button id="startBtn">Start</button>
   <div id="progressBox" style="display:none;">
     <div><b>Task:</b> <span id="taskUrl"></span></div>
     <div><b>Progress:</b> <span id="progressCount"></span></div>
